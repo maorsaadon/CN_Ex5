@@ -1,60 +1,16 @@
-
 #include <pcap.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include "header.h"
 
-/* Ethernet header */
-struct ethheader {
-    u_char  ether_dhost[6]; /* destination host address */
-    u_char  ether_shost[6]; /* source host address */
-    u_short ether_type;     /* protocol type (IP, ARP, RARP, etc) */
-};
-
-/* IP Header */
-struct ipheader {
-    unsigned char      iph_ihl:4, //IP header length
-    iph_ver:4; //IP version
-    unsigned char      iph_tos; //Type of service
-    unsigned short int iph_len; //IP Packet length (data + header)
-    unsigned short int iph_ident; //Identification
-    unsigned short int iph_flag:3, //Fragmentation flags
-    iph_offset:13; //Flags offset
-    unsigned char      iph_ttl; //Time to Live
-    unsigned char      iph_protocol; //Protocol type
-    unsigned short int iph_chksum; //IP datagram checksum
-    struct  in_addr    iph_sourceip; //Source IP address
-    struct  in_addr    iph_destip;   //Destination IP address
-};
-
-/* TCP Header */
-struct tcpheader {
-    u_short th_sport;               /* source port */
-    u_short th_dport;               /* destination port */
-    u_int th_seq;                 /* sequence number */
-    u_int th_ack;                 /* acknowledgement number */
-    u_char th_offx2;               /* data offset, rsvd */
-#define TH_OFF(th)(((th)->th_offx2 & 0xf0) >> 4) u_char th_flags;
-#define TH_FIN  0x01
-#define TH_SYN  0x02
-#define TH_RST  0x04
-#define TH_PUSH 0x08
-#define TH_ACK  0x10
-#define TH_URG  0x20
-#define TH_ECE  0x40
-#define TH_CWR  0x80
-#define TH_FLAGS        (TH_FIN|TH_SYN|TH_RST|TH_ACK|TH_URG|TH_ECE|TH_CWR)
-    u_short th_win;                 /* window */
-    u_short th_sum;                 /* checksum */
-    u_short th_urp;                 /* urgent pointer */
-};
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     struct ethheader *eth = (struct ethheader *) packet;
     FILE *file;
-    char my_id[12] = "318532421";
-    char filename[20];
+    char my_id[20] = "318532421_305677494";
+    char filename[28];
     snprintf(filename, sizeof(filename), "%s.txt", my_id);
     file = fopen(filename, "a"); // opening the file in append mode
     if (ntohs(eth->ether_type) == 0x0800) {
@@ -65,12 +21,13 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             inet_ntop(AF_INET, &(ip->iph_sourceip), source_ip, INET_ADDRSTRLEN);
             inet_ntop(AF_INET, &(ip->iph_destip), dest_ip, INET_ADDRSTRLEN);
             fprintf(file, "{\n source_ip: %s\n dest_ip: %s\n source_port: %u\n dest_port: %u\n timestamp: %lu\n total_length: %u\n cache_flag: %u\n steps_flag: %u\n type_flag: %u\n status_code: %u\n cache_control: %u\n data: ", source_ip, dest_ip, ntohs(tcp->source), ntohs(tcp->dest), header->ts.tv_sec, header->len, 0, 0, 0, 0, 0);
-            printf( "{\n source_ip: %s\n dest_ip: %s\n source_port: %u\n dest_port: %u\n timestamp: %lu\n total_length: %u\n cache_flag: %u\n steps_flag: %u\n type_flag: %u\n status_code: %u\n cache_control: %u\n data: ", source_ip, dest_ip, ntohs(tcp->source), ntohs(tcp->dest), header->ts.tv_sec, header->len, 0, 0, 0, 0, 0);
+//            printf( "{\n source_ip: %s\n dest_ip: %s\n source_port: %u\n dest_port: %u\n timestamp: %lu\n total_length: %u\n cache_flag: %u\n steps_flag: %u\n type_flag: %u\n status_code: %u\n cache_control: %u\n data: ", source_ip, dest_ip, ntohs(tcp->source), ntohs(tcp->dest), header->ts.tv_sec, header->len, 0, 0, 0, 0, 0);
             for (int i = 0; i < header->len; i++) {
                 fprintf(file, "%02x", packet[i]);
+//                printf("%02x", packet[i]);
             }
             fprintf(file, "\n}\n");
-            printf("\n}\n");
+//            printf("\n}\n");
         }
     }
     fclose(file);
