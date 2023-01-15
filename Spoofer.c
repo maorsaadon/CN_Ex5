@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-#include "myheader.h"
+#include "header.h"
 
 #define PACKET_LEN 1500
 #define SRC_IP "1.1.1.1"
@@ -87,7 +87,7 @@ int main(){
 
     // Calculate checksum
     icmp->icmp_chksum = 0;
-    icmp-> icmp_chksum = in_cksum((unsigned short *)icmp, sizeof(struct icmpheader));
+    icmp-> icmp_chksum = calculate_checksum((unsigned short *)icmp, sizeof(struct icmpheader));
 
     //Fill in the IP header
     struct ipheader *ip = (struct ipheader *) buffer;
