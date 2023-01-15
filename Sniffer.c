@@ -2,7 +2,6 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <arpa/inet.h>
-#include <time.h>
 #include <netinet/tcp.h>
 
 /* Ethernet header */
@@ -66,10 +65,12 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
             inet_ntop(AF_INET, &(ip->iph_sourceip), source_ip, INET_ADDRSTRLEN);
             inet_ntop(AF_INET, &(ip->iph_destip), dest_ip, INET_ADDRSTRLEN);
             fprintf(file, "{\n source_ip: %s\n dest_ip: %s\n source_port: %u\n dest_port: %u\n timestamp: %lu\n total_length: %u\n cache_flag: %u\n steps_flag: %u\n type_flag: %u\n status_code: %u\n cache_control: %u\n data: ", source_ip, dest_ip, ntohs(tcp->source), ntohs(tcp->dest), header->ts.tv_sec, header->len, 0, 0, 0, 0, 0);
+            printf( "{\n source_ip: %s\n dest_ip: %s\n source_port: %u\n dest_port: %u\n timestamp: %lu\n total_length: %u\n cache_flag: %u\n steps_flag: %u\n type_flag: %u\n status_code: %u\n cache_control: %u\n data: ", source_ip, dest_ip, ntohs(tcp->source), ntohs(tcp->dest), header->ts.tv_sec, header->len, 0, 0, 0, 0, 0);
             for (int i = 0; i < header->len; i++) {
                 fprintf(file, "%02x", packet[i]);
             }
             fprintf(file, "\n}\n");
+            printf("\n}\n");
         }
     }
     fclose(file);
