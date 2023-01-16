@@ -2,14 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
 
 #include "header.h"
 
 #define PACKET_LEN 1500
-#define SRC_IP "1.1.1.1"
 #define DST_IP "127.0.0.1"
 
 /*************************************************************
@@ -44,38 +46,23 @@ void send_raw_ip_packet(struct ipheader* ip)
     close(sock);
 }
 
-
-unsigned short calculate_checksum(unsigned short *buf, int length)
-{
-    int nleft = length;
-    int sum = 0;
-    unsigned short *w = buf;
-    unsigned short answer = 0;
-
-    while (nleft > 1)
-    {
-        sum += *w++;
-        nleft -= 2;
-    }
-
-    if (nleft == 1)
-    {
-        *((unsigned char *)&answer) = *((unsigned char *)w);
-            sum += answer;
-    }
-
-    // add back carry-outs from top 16 bits to low 16 bits
-    sum = (sum >> 16) + (sum & 0xffff); // add hi 16 to low 16
-    sum += (sum >> 16);                 // add carry
-    answer = ~sum;                      // truncate to 16 bits
-
-    return answer;
-}
-
 /*******************************
   Spoof an ICMP echo request
 ********************************/
-int main(){
+int main(int argc, char *argv[]){
+    //check the IP
+    if (argc != 2) {
+        fprintf(stderr, "You need to put IP!\n");
+        exit(-1);
+    }
+    char ptr_IP[15];
+    strcpy(ptr_IP , argv[1]);
+    if (!validateIp(ptr_IP))
+    {
+        fprintf(stderr, "YIp isn't valid!\n");
+        exit(-1);
+    }
+
     char buffer[PACKET_LEN];
     memset(buffer, 0, PACKET_LEN);
 
@@ -95,7 +82,7 @@ int main(){
     ip->iph_ihl = 5;
     ip->iph_tos = 16;
     ip->iph_ttl = 128;
-    ip->iph_sourceip.s_addr = inet_addr(SRC_IP);
+    ip->iph_sourceip.s_addr = inet_addr(argv[1]);
     ip->iph_destip.s_addr = inet_addr(DST_IP);
     ip->iph_protocol = IPPROTO_ICMP;
     ip->iph_len = htons(sizeof(struct ipheader) + sizeof(struct icmpheader));
@@ -105,3 +92,43 @@ int main(){
 
     return 0;
 }
+
+/*******************************
+            Helper
+********************************/
+
+unsigned short calculate_checksum(unsigned short *buf, int length)
+{
+    int nleft = length;
+    int sum = 0;
+    unsigned short *w = buf;
+    unsigned short answer = 0;
+
+    while (nleft > 1)
+    {
+        sum += *w++;
+        nleft -= 2;
+    }
+
+    if (nleft == 1)
+    {
+        *((unsigned char *)&answer) = *((unsigned char *)w);
+        sum += answer;
+    }
+
+    // add back carry-outs from top 16 bits to low 16 bits
+    sum = (sum >> 16) + (sum & 0xffff); // add hi 16 to low 16
+    sum += (sum >> 16);                 // add carry
+    answer = ~sum;                      // truncate to 16 bits
+
+    return answer;
+}
+
+
+int validateIp(char *ip) { //check whether the IP is valid or not
+   struct sockaddr_in sa;
+   int result = inet_pton(AF_INET, ip, &(sa.sin_addr));
+   return result!= 0;
+}
+
+
