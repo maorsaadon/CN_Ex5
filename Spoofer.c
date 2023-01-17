@@ -1,94 +1,97 @@
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include <errno.h>
+#include<sys/socket.h>
+#include<arpa/inet.h> // for inet_ntoa()
+#include<netinet/ip_icmp.h>	//Provides declarations for icmp headereader
+#include<netinet/ip.h>	//Provides declarations for ip header
 #include <netinet/in.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdbool.h>
+#include <unistd.h>
 
-#include "header.h"
-
-#define PACKET_LEN 1500
 #define DST_IP "127.0.0.1"
 
-/*************************************************************
-  Given an IP packet, send it out using a raw socket.
-**************************************************************/
-void send_raw_ip_packet(struct ipheader* ip)
-{
-    struct sockaddr_in dest_info;
-    int enable = 1;
+
+unsigned short calculate_checksum(unsigned short *buf, int length);
+
+int main(int argc, char *argv[]){
+    //check the IP
+    if (argc == 1) {
+        argv[1] = "1.1.1.1";
+    }
+
+    /*******************************
+       Spoof an ICMP echo request
+    ********************************/
+
+    char packet[IP_MAXPACKET];// Combine the packet
+    memset(packet, 0, IP_MAXPACKET);
+
+    //Fill in the IP header
+    struct iphdr *ip = (struct iphdr *)( packet );
+    unsigned short iphdrlen = ip->ihl*4;
+
+    ip->version = 4;
+    ip->ihl = 5;
+    ip->tos = 16;
+    ip->ttl= 20;
+    ip->protocol = IPPROTO_ICMP;
+    ip->saddr = inet_addr(argv[1]);
+    ip->daddr = inet_addr(DST_IP);
+    ip->tot_len= htons(sizeof(struct iphdr));
+
+
+    // Fill in the ICMP header
+    struct icmphdr *icmp = (struct icmphdr *)(packet + iphdrlen);
+    int header_size =  iphdrlen + sizeof(struct icmphdr) ;
+
+    icmp->type = ICMP_ECHO;//ICMP type 8 for request and 0 for replay
+    icmp->code = 0;
+    icmp->un.echo.id =18;
+    icmp->un.echo.sequence =0;
+
+    // Calculate checksum
+    icmp->checksum= calculate_checksum((unsigned short *) (packet), header_size);
+
+
+    /*************************************************************
+          Given an IP packet, send it out using a raw socket.
+    **************************************************************/
+
+    //send the spoofed packet
 
     // Step 1: Create a raw network socket.
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
     // Step 2: Set socket option.
+    int enable = 1;
     setsockopt(sock, IPPROTO_IP, IP_HDRINCL,&enable, sizeof(enable));
 
     // Step 3: Provide needed information about destination
-    dest_info.sin_family = AF_INET;
-    dest_info.sin_addr = ip->iph_destip;
+    struct sockaddr_in source,dest;
+    memset(&source, 0, sizeof(source));
+    source.sin_addr.s_addr = ip->saddr;
+
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_addr.s_addr = ip->daddr;
+    dest.sin_family = AF_INET;
+
+
 
     // Step 4: Send the packet out.
-    printf("Sending spoofd IP packet...");
-    if (sendto(sock, ip, ntohs(ip->iph_len), 0,(struct sockaddr *)&dest_info, sizeof(dest_info)) < 0){
+    printf("Sending spoofd IP packet...\n");
+    if (sendto(sock, packet, sizeof(packet) , 0, (struct sockaddr *)&dest, sizeof(dest))< 0)
+    {
         fprintf(stderr, "sendto() failed with error: %d", errno);
     }
-    else{
+    else
+    {
         printf("\n---------------------------\n");
-        printf("\tFrom: %s\n", inet_ntoa(ip->iph_sourceip));
-        printf("\tTo: %s\n", inet_ntoa(ip->iph_destip));
+        printf("\nSending spoofd IP packet from : %s to : ", inet_ntoa(source.sin_addr));
+        printf("%s" , inet_ntoa(dest.sin_addr));
         printf("\n---------------------------\n");
+
     }
     close(sock);
-}
-
-/*******************************
-  Spoof an ICMP echo request
-********************************/
-int main(int argc, char *argv[]){
-    //check the IP
-    if (argc != 2) {
-        fprintf(stderr, "You need to put IP!\n");
-        exit(-1);
-    }
-    char ptr_IP[15];
-    strcpy(ptr_IP , argv[1]);
-    if (!validateIp(ptr_IP))
-    {
-        fprintf(stderr, "YIp isn't valid!\n");
-        exit(-1);
-    }
-
-    char buffer[PACKET_LEN];
-    memset(buffer, 0, PACKET_LEN);
-
-    // Fill in the ICMP header
-    struct icmpheader *icmp = (struct icmpheader *) (buffer + sizeof(struct ipheader));
-
-    //ICMP type 8 for request and 0 for replay
-    icmp->icmp_type = 8;
-
-    // Calculate checksum
-    icmp->icmp_chksum = 0;
-    icmp-> icmp_chksum = calculate_checksum((unsigned short *)icmp, sizeof(struct icmpheader));
-
-    //Fill in the IP header
-    struct ipheader *ip = (struct ipheader *) buffer;
-    ip->iph_ver = 4;
-    ip->iph_ihl = 5;
-    ip->iph_tos = 16;
-    ip->iph_ttl = 128;
-    ip->iph_sourceip.s_addr = inet_addr(argv[1]);
-    ip->iph_destip.s_addr = inet_addr(DST_IP);
-    ip->iph_protocol = IPPROTO_ICMP;
-    ip->iph_len = htons(sizeof(struct ipheader) + sizeof(struct icmpheader));
-
-    //send the spoofed packet
-    send_raw_ip_packet(ip);
 
     return 0;
 }
@@ -122,13 +125,6 @@ unsigned short calculate_checksum(unsigned short *buf, int length)
     answer = ~sum;                      // truncate to 16 bits
 
     return answer;
-}
-
-
-int validateIp(char *ip) { //check whether the IP is valid or not
-   struct sockaddr_in sa;
-   int result = inet_pton(AF_INET, ip, &(sa.sin_addr));
-   return result!= 0;
 }
 
 

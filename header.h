@@ -77,9 +77,5 @@ struct pseudo_tcp
     char payload[1500];
 };
 
-/* Spoofer header */
-void send_raw_ip_packet(struct ipheader* ip);
-unsigned short calculate_checksum(unsigned short *buf, int length);
-int validateIp(char *ip);
 
 #endif //CN_EX5_HEADER_H
