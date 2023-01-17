@@ -2,12 +2,12 @@
 #include<stdio.h>
 #include<stdlib.h> // for exit()
 #include<string.h> //for memset
+
 #include<arpa/inet.h> // for inet_ntoa()
 #include<net/ethernet.h>
 #include<netinet/udp.h>	//Provides declarations for udp header
 #include<netinet/tcp.h>	//Provides declarations for tcp header
 #include<netinet/ip.h>	//Provides declarations for ip header
-
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *buffer);
 void print_packet_level(const u_char *Buffer, int Size);
@@ -69,8 +69,6 @@ int main()
     //Put the device in sniff loop
     pcap_loop(handle , -1 , got_packet , NULL);
 
-    pcap_close(handle);
-
     printf("we catch total %d TCP packets\n", tcp );
 
     return 0;
@@ -90,10 +88,9 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *bu
     }
 }
 
-void print_packet_level(const u_char *Buffer, int Size)
+void print_packet_level(const u_char *buffer, int Size)
 {
-    struct ethhdr *eth = (struct ethhdr *)Buffer;
-    struct iphdr *iph = (struct iphdr *)(Buffer  + sizeof(struct ethhdr) );
+    struct iphdr *iph = (struct iphdr *)(buffer  + sizeof(struct ethhdr) );
     unsigned short iphdrlen =iph->ihl*4 ;
 
     memset(&source, 0, sizeof(source));
@@ -101,7 +98,7 @@ void print_packet_level(const u_char *Buffer, int Size)
     memset(&dest, 0, sizeof(dest));
     dest.sin_addr.s_addr = iph->daddr;
 
-    struct tcphdr *tcph=(struct tcphdr*)(Buffer + iphdrlen + sizeof(struct ethhdr));
+    struct tcphdr *tcph=(struct tcphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
     int header_size =  sizeof(struct ethhdr) + iphdrlen + tcph->doff*4;
 
 
@@ -144,13 +141,13 @@ void print_packet_level(const u_char *Buffer, int Size)
     fprintf(output , "\n");
 
     fprintf(output , "IP Header\n");
-    PrintData(Buffer,iphdrlen);
+    PrintData(buffer,iphdrlen);
 
     fprintf(output , "TCP Header\n");
-    PrintData(Buffer+iphdrlen,tcph->doff*4);
+    PrintData(buffer+iphdrlen,tcph->doff*4);
 
     fprintf(output , "Data Payload\n");
-    PrintData(Buffer + header_size , Size - header_size );
+    PrintData(buffer + header_size , Size - header_size );
 
     fprintf(output , "\n###########################################################");
 

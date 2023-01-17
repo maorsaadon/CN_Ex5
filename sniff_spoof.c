@@ -74,7 +74,6 @@ int main()
     //Put the device in sniff loop
     pcap_loop(handle , -1 , got_packet , NULL);
 
-    pcap_close(handle);
 
 }
 
@@ -136,7 +135,7 @@ void send_reply_packet(struct iphdr *ip) {
     struct icmphdr *new_icmp = (struct icmphdr *)(packet + iphdrlen);
     int header_size =  iphdrlen + sizeof(struct icmphdr) ;
 
-    new_icmp->type = ICMP_ECHO;//ICMP type 8 for request and 0 for replay
+    new_icmp->type = ICMP_ECHOREPLY;//ICMP type 8 for request and 0 for replay
     new_icmp->code = 0;
     new_icmp->un.echo.id =18;
     new_icmp->un.echo.sequence =0;
@@ -174,7 +173,7 @@ void send_reply_packet(struct iphdr *ip) {
     }
     else{
 
-        fprintf(output,"Sending spoofd IP packet...\n");
+        fprintf(output,"\nSending spoofd IP packet...\n");
         fprintf(output,"\n\n***********************ICMP Packet*************************\n");
 
         fprintf(output,"\nIP Header\n");
@@ -211,8 +210,6 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     if (ip->protocol == IPPROTO_ICMP) //Check the Protocol and do accordingly...
     {
             send_reply_packet(ip);
-            return;
-
 
     }
 
