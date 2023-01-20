@@ -5,7 +5,7 @@
 #include<arpa/inet.h> // for inet_ntoa()
 #include "header.h"
 
-#define PCAP_ERROR -1
+
 #define SIZE_ETHERNET 14
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *buffer);
@@ -56,8 +56,9 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     u_int iphdrlen = IP_HL(iph)*4;
 
     const struct tcp_hdr *tcph = (struct tcp_hdr*)(packet + iphdrlen + SIZE_ETHERNET); /* The TCP header */
-    u_int tcphlen = TH_OFF(tcph)*4;
+    u_int tcphdrlen = TH_OFF(tcph)*4;
 
+    const struct app_hdr *apph = (struct app_hdr *)(packet + SIZE_ETHERNET + iphdrlen + tcphdrlen);/* The APP header */
 
 
     fprintf(output , "\n\n***********************TCP Packet*************************\n");
@@ -73,14 +74,14 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 
     //TCP Header
     fprintf(output , "\n                        TCP Header                           \n\n");
-    fprintf(output , "   |-Source Port           : %u\n",ntohs(tcph->source));
-    fprintf(output , "   |-Destination Port      : %u\n",ntohs(tcph->dest));
-    fprintf(output , "   |-Cache Flag            : %u\n",tcph->cache_flag);
-    fprintf(output , "   |-Steps Flag            : %u\n",tcph->steps_flag);
-    fprintf(output , "   |-Type Flag             : %u\n",tcph->type_flag);
-    fprintf(output , "   |-Status Code           : %u\n",tcph->status_code);
-    fprintf(output , "   |-Cache Control         : %u\n",ntohs(tcph->check));
-    fprintf(output , "   |-Timestamp             : %u\n", ntohl(tcph->timestamp));
+    fprintf(output , "   |-Source Port           : %u\n", ntohs(tcph->sport));
+    fprintf(output , "   |-Destination Port      : %u\n", ntohs(tcph->dport));
+    fprintf(output , "   |-Cache Flag            : %u\n",apph->cache_flag);
+    fprintf(output , "   |-Steps Flag            : %u\n",apph->steps_flag);
+    fprintf(output , "   |-Type Flag             : %u\n",apph->type_flag);
+    fprintf(output , "   |-Status Code           : %u\n",apph->status_code);
+    fprintf(output , "   |-Cache Control         : %u\n",ntohs(tcph->checksum));
+    fprintf(output , "   |-Timestamp             : %u\n",ntohl(apph->timestamp));
     fprintf(output , "\n                        DATA                           \n");
 
     uint8_t *data = (uint8_t *)malloc(sizeof(uint8_t) * header->len);

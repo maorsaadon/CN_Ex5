@@ -33,13 +33,13 @@ struct ip_hdr {
 /* TCP header */
 typedef u_int tcp_seq;
 
-struct tcp_hdr {
-    u_short source;	/* source port */
-    u_short dest;	/* destination port */
+struct tcp_hdr{
+    u_short sport;	/* source port */
+    u_short dport;	/* destination port */
     tcp_seq seq;		/* sequence number */
-    tcp_seq ack_seq;		/* acknowledgement number */
-    u_char offset;	/* data offset, rsvd */
-#define TH_OFF(th)	(((th)->offset & 0xf0) > 4)
+    tcp_seq ack;		/* acknowledgement number */
+    u_char th_offx2;	/* data offset, rsvd */
+#define TH_OFF(th)	(((th)->th_offx2 & 0xf0) > 4)
     u_char th_flags;
 #define TH_FIN 0x01
 #define TH_SYN 0x02
@@ -51,17 +51,8 @@ struct tcp_hdr {
 #define TH_CWR 0x80
 #define TH_FLAGS (TH_FIN|TH_SYN|TH_RST|TH_ACK|TH_URG|TH_ECE|TH_CWR)
     u_short window;		/* window */
-    u_short check;		/* checksum */
+    u_short checksum;		/* checksum */
     u_short urg_ptr;		/* urgent pointer */
-    uint32_t timestamp;
-    uint16_t total_length;
-    union
-    {
-        uint16_t reserved : 3, cache_flag : 1, steps_flag : 1, type_flag : 1, status_code : 10;
-        uint16_t flags;
-    };
-    uint16_t cache_control;
-    uint16_t padding;
 };
 
 struct icmp_hdr
@@ -73,6 +64,17 @@ struct icmp_hdr
     unsigned short int seq;    // Sequence number
 };
 
+struct app_hdr{
+    uint32_t timestamp;
+    uint16_t total_length;
+    union
+    {
+        uint16_t reserved : 3, cache_flag : 1, steps_flag : 1, type_flag : 1, status_code : 10;
+        uint16_t flags;
+    };
+    uint16_t cache_control;
+    uint16_t padding;
+};
 
 
 
