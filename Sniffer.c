@@ -14,7 +14,6 @@ void PrintData (const u_char * data , int Size);
 
 
 
-
 int main()
 {
 
@@ -53,7 +52,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
     const struct eth_hdr *ethernet = (struct eth_hdr *)(packet); /* The ethernet header */
 
     const struct ip_hdr *iph = (struct ip_hdr *)(packet + SIZE_ETHERNET); /* The IP header */
-    u_int iphdrlen = IP_HL(iph)*4;
+    u_int iphdrlen =  iph->ihl* 4;
 
     const struct tcp_hdr *tcph = (struct tcp_hdr*)(packet + iphdrlen + SIZE_ETHERNET); /* The TCP header */
     u_int tcphdrlen = TH_OFF(tcph)*4;

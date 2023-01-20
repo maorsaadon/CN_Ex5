@@ -26,8 +26,6 @@ struct ip_hdr {
     u_short check;		/* checksum */
     struct in_addr saddr, daddr; /* source and dest address */
 };
-#define IP_HL(ip)		(((ip)->version) & 0x0f)
-#define IP_V(ip)		(((ip)->version) >> 4)
 
 
 /* TCP header */
@@ -53,6 +51,8 @@ struct tcp_hdr{
     u_short window;		/* window */
     u_short checksum;		/* checksum */
     u_short urg_ptr;		/* urgent pointer */
+
+
 };
 
 struct icmp_hdr
