@@ -35,7 +35,7 @@ int main() {
 
 }
 
-
+// function to handle sniffed packet
 void got_packet(u_char *args, const struct pcap_pkthdr *header,  const u_char *packet) {
 
 //Get the IP Header part of this packet , excluding the ethernet header
@@ -55,20 +55,24 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header,  const u_char *p
    Spoof an ICMP echo request
 ********************************/
 void send_echo_reply(struct ip_hdr * ip) {
+    
+    // creating packet for spoffed ICMP reply
 
     const char buffer[PACKET_LEN];
     memset((char *) buffer, 0, PACKET_LEN);
 
-
+    // icmp header
     struct icmp_hdr *new_icmp = (struct icmp_hdr *)(buffer + sizeof(struct ip_hdr));
     new_icmp->type = 0;
     new_icmp->checksum = calculate_checksum((unsigned short *)new_icmp,sizeof(struct icmp_hdr));
+    
+    // ip header
 
     struct ip_hdr *new_ip = (struct ip_hdr *) buffer;
     new_ip->version = 4;
     new_ip->ihl = 5;
     new_ip->ttl = 20;
-    new_ip->saddr.s_addr = inet_addr(inet_ntoa(ip->daddr));
+    new_ip->saddr.s_addr = inet_addr(inet_ntoa(ip->daddr)); // set src address to the dest adress that was pinged.
     new_ip->daddr.s_addr= inet_addr(inet_ntoa(ip->saddr));
     new_ip->protocol = IPPROTO_ICMP;
     new_ip->tot_len= htons(sizeof(struct ip_hdr) + sizeof(struct icmp_hdr));
