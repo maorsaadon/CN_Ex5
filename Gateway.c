@@ -21,7 +21,7 @@ int main(int argc , char *argv[])
         printf("please put IP !\n");
         exit(1);
     }
-    // Create socket
+    // Create sending socket
     sockIp = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockIp < 0) {
         perror("Error creating socket");
@@ -36,7 +36,7 @@ int main(int argc , char *argv[])
 
 
     printf("Starting the gateway process..\n");
-    //Create a raw socket that shall sniff
+    //Create a raw recieving socket
     sockAny = socket(AF_INET , SOCK_DGRAM , 0);
     if(sockAny < 0)
     {
@@ -44,21 +44,21 @@ int main(int argc , char *argv[])
         return 1;
     }
 
-    receiver.sin_port = htons(PORT);
+    receiver.sin_port = htons(PORT); // port 50000
     receiver.sin_addr.s_addr = INADDR_ANY;
     receiver.sin_family = AF_INET;
     receiverSize = sizeof receiver;
 
-    if (bind(sockAny, (struct sockaddr *) &receiver, receiverSize) < 0) {
+    if (bind(sockAny, (struct sockaddr *) &receiver, receiverSize) < 0) { // 
         perror("Error binding socket to IP and port");
         return 1;
     }
-    while(1)
+    while(1) // infinite loop
     {
 
         printf("Receiving UDP packets\n");
         //Receive a packet
-        dataSize = recvfrom(sockAny , buffer , 65536 , 0 , NULL , 0);
+        dataSize = recvfrom(sockAny , buffer , 65536 , 0 , NULL , 0); // recieve packet
         if(dataSize <0 )
         {
             printf("Recvfrom error , failed to get packets\n");
@@ -66,8 +66,10 @@ int main(int argc , char *argv[])
         }
 
         printf("let's see if you have lucky today ............\n");
-        double randomNum = ((float)random())/((float)RAND_MAX);
-        if (randomNum > 0.5)
+        
+        double randomNum = ((float)random())/((float)RAND_MAX); // generate random number between 0 and 1
+        
+        if (randomNum > 0.5) // gateway transfers only 50% of packets (unreliable by design)
         {
             //Now process the packet
             send_udp_packet(buffer , dataSize , argv[1]);
@@ -99,7 +101,7 @@ void send_udp_packet(unsigned char *packet, int size , char *ip)
     sender.sin_addr.s_addr = inet_addr(ip);
 
 
-    if(sendto(sockIp, packet, size , 0, (struct sockaddr *) &sender, sizeof(sender)) < 0){
+    if(sendto(sockIp, packet, size , 0, (struct sockaddr *) &sender, sizeof(sender)) < 0){ // send UDP packet
         perror("Error with sendto() the packet\n");
 
     }
