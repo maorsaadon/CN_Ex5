@@ -13,23 +13,33 @@ void send_raw_ip_packet(struct ip_hdr* ip);
 unsigned short calculate_checksum (unsigned short *buf, int length);
 
 int main(int argc, char *argv[]){
+    // recive ip from user
     if (argc == 1) {
         argv[1] = "1.1.1.1";
     }
-
+    
+    // verify validity of ip
     if(!check_ip(argv[1]))
     {
         printf(" Sorry but this is not a valid ip please try again. \n");
         exit(1);
 
     }
+    
+    
     char buffer[PACKET_LEN];
 
     memset(buffer, 0, PACKET_LEN);
+    
+    // start creting ICMP packet
+    
+    // ICMP header
 
     struct icmp_hdr *icmp = (struct icmp_hdr *)(buffer + sizeof(struct ip_hdr));
     icmp->type = 8;
     icmp->checksum = calculate_checksum((unsigned short *)icmp,sizeof(struct icmp_hdr));
+    
+     // IP header
 
     struct ip_hdr *ip = (struct ip_hdr *) buffer;
     ip->version = 4;
