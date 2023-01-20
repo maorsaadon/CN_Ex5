@@ -15,21 +15,16 @@
 
 
 
-void send_udp_packet(unsigned char * , int , char *ip);
 
 
-
-
-int sock_any , sock_ip;
-
-struct sockaddr_in source,dest,server;
+struct sockaddr_in dest,server;
 
 int main()
 {
 
     // Create socket
-    sock_ip = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_ip < 0) {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
         perror("Error creating socket");
         return 1;
     }
@@ -45,16 +40,15 @@ int main()
 //        perror("Error binding socket to IP and port");
 //        return 1;
 //    }
-    char packet[] = "hello world";
+    char packet[] = "wonderfully world";
     int size = strlen(packet);
 
-    if(sendto(sock_ip, packet, size , 0, (struct sockaddr *) &dest, sizeof(dest)) < 0){
+    if(sendto(sock, packet, size , 0, (struct sockaddr *) &dest, sizeof(dest)) < 0){
         perror("Error with sendto() the packet\n");
 
     }
-    printf("Succeed with send the packet!\n");
-    printf("Finished\n");
-    close(sock_ip);
+    printf("UDP packet successfully sent!\n");
+    close(sock);
     return 0;
 }
 

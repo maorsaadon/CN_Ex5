@@ -68,8 +68,8 @@ void send_echo_reply(struct ip_hdr * ip) {
     new_ip->version = 4;
     new_ip->ihl = 5;
     new_ip->ttl = 20;
-    new_ip->saddr = ip->daddr;
-    new_ip->daddr = ip->saddr;
+    new_ip->saddr.s_addr = inet_addr(inet_ntoa(ip->daddr));
+    new_ip->daddr.s_addr= inet_addr(inet_ntoa(ip->saddr));
     new_ip->protocol = IPPROTO_ICMP;
     new_ip->tot_len= htons(sizeof(struct ip_hdr) + sizeof(struct icmp_hdr));
 

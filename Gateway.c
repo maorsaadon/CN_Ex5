@@ -10,23 +10,22 @@
 
 
 
-void send_udp_packet(unsigned char * , int , char *ip);
+void send_udp_packet(unsigned char *packet, int size , char *ip);
 
-int sock_any , sock_ip;
-struct sockaddr_in lst,sender;
+int sockAny , sockIp;
+struct sockaddr_in receiver,sender;
 
 int main(int argc , char *argv[])
 {
 
     // Create socket
-    sock_ip = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_ip < 0) {
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockIp < 0) {
         perror("Error creating socket");
         return 1;
     }
 
-
-    int lst_size , data_size;
+    int receiverSize , dataSize;
 
     struct in_addr in;
 
@@ -36,49 +35,49 @@ int main(int argc , char *argv[])
 
     printf("Starting the gateway process..\n");
     //Create a raw socket that shall sniff
-    sock_any = socket(AF_INET , SOCK_DGRAM , 0);
-    if(sock_any < 0)
+    sockAny = socket(AF_INET , SOCK_DGRAM , 0);
+    if(sockAny < 0)
     {
         printf("Socket Error\n");
         return 1;
     }
 
-    lst.sin_port = htons(PORT);
-    lst.sin_addr.s_addr = INADDR_ANY;
-    lst.sin_family = AF_INET;
-    lst_size = sizeof lst;
+    receiver.sin_port = htons(PORT);
+    receiver.sin_addr.s_addr = INADDR_ANY;
+    receiver.sin_family = AF_INET;
+    receiverSize = sizeof receiver;
 
-    if (bind(sock_any, (struct sockaddr *) &lst, lst_size) < 0) {
+    if (bind(sockAny, (struct sockaddr *) &receiver, receiverSize) < 0) {
         perror("Error binding socket to IP and port");
         return 1;
     }
     while(1)
     {
 
-        printf("Listening to get UDP packets\n");
+        printf("Receiving UDP packets\n");
         //Receive a packet
-        data_size = recvfrom(sock_any , buffer , 65536 , 0 , NULL , 0);
-        if(data_size <0 )
+        dataSize = recvfrom(sockAny , buffer , 65536 , 0 , NULL , 0);
+        if(dataSize <0 )
         {
             printf("Recvfrom error , failed to get packets\n");
             return 1;
         }
         printf("Transfer the data to: %s\n" , argv[1]);
-        double random_number = ((float)random())/((float)RAND_MAX);
-        if (random_number > 0.5)
+        double randomNum = ((float)random())/((float)RAND_MAX);
+        if (randomNum > 0.5)
         {
             //Now process the packet
-            send_udp_packet(buffer , data_size , argv[1]);
-            printf("The number is : %f ,you have lucky today!\n" , random_number);
+            send_udp_packet(buffer , dataSize , argv[1]);
+            printf("The number is : %f ,congratulation! you packet will be transfer through the Gateway..\n" , randomNum);
             printf("The gateway transfer the packet.\n");
         }
         else{
-            printf("The number is : %f ,you have bad luck today maybe next time!\n" , random_number);
+            printf("The number is : %f ,sorry luck is not with you today, try again later!\n" , randomNum);
         }
 
     }
-    //pclose(sock_any);
-    printf("Finished");
+    close(sockAny);
+    printf("Done");
     return 0;
 }
 
