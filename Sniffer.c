@@ -29,8 +29,8 @@ int main()
     handle = pcap_open_live(nameDevice, BUFSIZ, 1, 1000, errbuf);
 
     //Compile filter_exp into BPF psuedo-code
-    pcap_compile(handle, &fp, filter_exp, 0, net)
-      pcap_setfilter(handle, &fp)
+    pcap_compile(handle, &fp, filter_exp, 0, net);
+    pcap_setfilter(handle, &fp);
 
     //Capture packets
     pcap_loop(handle, -1, got_packet, NULL);
