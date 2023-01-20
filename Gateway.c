@@ -17,9 +17,12 @@ struct sockaddr_in receiver,sender;
 
 int main(int argc , char *argv[])
 {
-
+    if (argc < 2) {
+        printf("please put IP !\n");
+        exit(1);
+    }
     // Create socket
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    sockIp = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockIp < 0) {
         perror("Error creating socket");
         return 1;
@@ -30,7 +33,6 @@ int main(int argc , char *argv[])
     struct in_addr in;
 
     unsigned char *buffer = (unsigned char *)malloc(65536);
-
 
 
     printf("Starting the gateway process..\n");
@@ -62,14 +64,15 @@ int main(int argc , char *argv[])
             printf("Recvfrom error , failed to get packets\n");
             return 1;
         }
-        printf("Transfer the data to: %s\n" , argv[1]);
+
+        printf("let's see if you have lucky today ............\n");
         double randomNum = ((float)random())/((float)RAND_MAX);
         if (randomNum > 0.5)
         {
             //Now process the packet
             send_udp_packet(buffer , dataSize , argv[1]);
             printf("The number is : %f ,congratulation! you packet will be transfer through the Gateway..\n" , randomNum);
-            printf("The gateway transfer the packet.\n");
+            printf("The gateway transfer the packet to %s.\n", argv[1]);
         }
         else{
             printf("The number is : %f ,sorry luck is not with you today, try again later!\n" , randomNum);
@@ -77,6 +80,7 @@ int main(int argc , char *argv[])
 
     }
     close(sockAny);
+    close(sockIp);
     printf("Done");
     return 0;
 }
@@ -86,7 +90,7 @@ int main(int argc , char *argv[])
 void send_udp_packet(unsigned char *packet, int size , char *ip)
 {
 
-    printf("\n\n*******UDP Packet******\n");
+    printf("\n\n*******UDP Packet******\n\n");
 
     // Set the destination address
     memset(&sender, 0, sizeof(sender));
@@ -95,7 +99,7 @@ void send_udp_packet(unsigned char *packet, int size , char *ip)
     sender.sin_addr.s_addr = inet_addr(ip);
 
 
-    if(sendto(sock_ip, packet, size , 0, (struct sockaddr *) &sender, sizeof(sender)) < 0){
+    if(sendto(sockIp, packet, size , 0, (struct sockaddr *) &sender, sizeof(sender)) < 0){
         perror("Error with sendto() the packet\n");
 
     }
